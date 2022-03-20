@@ -1,0 +1,336 @@
+[
+  {
+    "inputs": [
+      { "internalType": "address", "name": "hub", "type": "address" },
+      { "internalType": "address", "name": "host", "type": "address" }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  { "inputs": [], "name": "InitParamsInvalid", "type": "error" },
+  { "inputs": [], "name": "InitParamsInvalid", "type": "error" },
+  { "inputs": [], "name": "InsufficientMirrorFee", "type": "error" },
+  { "inputs": [], "name": "StreamNotFound", "type": "error" },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "profileId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "pubId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "superToken",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "flowRate",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "minSeconds",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "tag",
+        "type": "string"
+      }
+    ],
+    "name": "InitReferenceModule",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "sponsor",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "receiver",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "profileId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "pubId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "profileIdPointed",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "pubIdPointed",
+        "type": "uint256"
+      }
+    ],
+    "name": "MirrorCreated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "sender",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "receiver",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "pubId",
+        "type": "uint256"
+      }
+    ],
+    "name": "MirrorStreamDeleted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "sender",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "receiver",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "pubId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "flowRate",
+        "type": "uint256"
+      }
+    ],
+    "name": "MirrorStreamUpdated",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "HUB",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "SF_CFA_ID",
+    "outputs": [{ "internalType": "bytes", "name": "", "type": "bytes" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "contract ISuperToken",
+        "name": "_superToken",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_agreementClass",
+        "type": "address"
+      },
+      { "internalType": "bytes32", "name": "", "type": "bytes32" },
+      { "internalType": "bytes", "name": "_agreementData", "type": "bytes" },
+      { "internalType": "bytes", "name": "", "type": "bytes" },
+      { "internalType": "bytes", "name": "_ctx", "type": "bytes" }
+    ],
+    "name": "afterAgreementCreated",
+    "outputs": [{ "internalType": "bytes", "name": "newCtx", "type": "bytes" }],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "contract ISuperToken",
+        "name": "_superToken",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_agreementClass",
+        "type": "address"
+      },
+      { "internalType": "bytes32", "name": "", "type": "bytes32" },
+      { "internalType": "bytes", "name": "_agreementData", "type": "bytes" },
+      { "internalType": "bytes", "name": "", "type": "bytes" },
+      { "internalType": "bytes", "name": "_ctx", "type": "bytes" }
+    ],
+    "name": "afterAgreementTerminated",
+    "outputs": [{ "internalType": "bytes", "name": "newCtx", "type": "bytes" }],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "contract ISuperToken",
+        "name": "_superToken",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_agreementClass",
+        "type": "address"
+      },
+      { "internalType": "bytes32", "name": "", "type": "bytes32" },
+      { "internalType": "bytes", "name": "_agreementData", "type": "bytes" },
+      { "internalType": "bytes", "name": "", "type": "bytes" },
+      { "internalType": "bytes", "name": "_ctx", "type": "bytes" }
+    ],
+    "name": "afterAgreementUpdated",
+    "outputs": [{ "internalType": "bytes", "name": "newCtx", "type": "bytes" }],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "contract ISuperToken", "name": "", "type": "address" },
+      { "internalType": "address", "name": "", "type": "address" },
+      { "internalType": "bytes32", "name": "", "type": "bytes32" },
+      { "internalType": "bytes", "name": "", "type": "bytes" },
+      { "internalType": "bytes", "name": "", "type": "bytes" }
+    ],
+    "name": "beforeAgreementCreated",
+    "outputs": [{ "internalType": "bytes", "name": "", "type": "bytes" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "contract ISuperToken", "name": "", "type": "address" },
+      { "internalType": "address", "name": "", "type": "address" },
+      { "internalType": "bytes32", "name": "", "type": "bytes32" },
+      { "internalType": "bytes", "name": "", "type": "bytes" },
+      { "internalType": "bytes", "name": "", "type": "bytes" }
+    ],
+    "name": "beforeAgreementTerminated",
+    "outputs": [{ "internalType": "bytes", "name": "", "type": "bytes" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "contract ISuperToken", "name": "", "type": "address" },
+      { "internalType": "address", "name": "", "type": "address" },
+      { "internalType": "bytes32", "name": "", "type": "bytes32" },
+      { "internalType": "bytes", "name": "", "type": "bytes" },
+      { "internalType": "bytes", "name": "", "type": "bytes" }
+    ],
+    "name": "beforeAgreementUpdated",
+    "outputs": [{ "internalType": "bytes", "name": "", "type": "bytes" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "profileId", "type": "uint256" },
+      { "internalType": "uint256", "name": "pubId", "type": "uint256" },
+      { "internalType": "bytes", "name": "data", "type": "bytes" }
+    ],
+    "name": "initializeReferenceModule",
+    "outputs": [{ "internalType": "bytes", "name": "", "type": "bytes" }],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "sponsorProfileId",
+        "type": "uint256"
+      },
+      { "internalType": "uint256", "name": "mirrorPubId", "type": "uint256" }
+    ],
+    "name": "isMirrorValid",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "profileId", "type": "uint256" },
+      {
+        "internalType": "uint256",
+        "name": "profileIdPointed",
+        "type": "uint256"
+      },
+      { "internalType": "uint256", "name": "pubIdPointed", "type": "uint256" }
+    ],
+    "name": "processComment",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "profileId", "type": "uint256" },
+      {
+        "internalType": "uint256",
+        "name": "profileIdPointed",
+        "type": "uint256"
+      },
+      { "internalType": "uint256", "name": "pubIdPointed", "type": "uint256" }
+    ],
+    "name": "processMirror",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+]

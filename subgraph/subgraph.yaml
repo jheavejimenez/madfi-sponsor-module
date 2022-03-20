@@ -1,0 +1,32 @@
+specVersion: 0.0.2
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: SponsorModule
+    network: mumbai
+    source:
+      address: "0x28ff8e457feF9870B9d1529FE68Fbb95C3181f64"
+      abi: SponsorModule
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      entities:
+        - InitReferenceModule
+        - MirrorCreated
+        - MirrorStreamDeleted
+        - MirrorStreamUpdated
+      abis:
+        - name: SponsorModule
+          file: ./abis/SponsorModule.json
+      eventHandlers:
+        - event: InitReferenceModule(uint256,uint256,address,address,uint256,uint256,string)
+          handler: handleInitReferenceModule
+        - event: MirrorCreated(address,address,uint256,uint256,uint256,uint256)
+          handler: handleMirrorCreated
+        - event: MirrorStreamDeleted(address,address,uint256)
+          handler: handleMirrorStreamDeleted
+        - event: MirrorStreamUpdated(address,address,uint256,uint256)
+          handler: handleMirrorStreamUpdated
+      file: ./src/mapping.ts

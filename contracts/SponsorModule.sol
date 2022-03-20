@@ -42,7 +42,7 @@ contract SponsorModule is IReferenceModule, FollowValidationModuleBase, SuperRec
   event InitReferenceModule(
     uint256 profileId,
     uint256 pubId,
-    address acccount,
+    address account,
     address superToken,
     uint256 flowRate,
     uint256 minSeconds,

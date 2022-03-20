@@ -1,0 +1,34 @@
+type MadCreator @entity {
+  id: ID!
+  publications: [MadPublication!]! @derivedFrom(field: "creator")
+  tags: [String!]!
+}
+
+type MadPublication @entity {
+	id: ID!
+	referenceModule: Bytes!
+  creator: MadCreator!
+  profileId: BigInt!
+  pubId: BigInt!
+  superToken: Bytes!
+  flowRate: BigInt!
+  minSeconds: BigInt!
+  tag: String!
+  streams: [MadStream!]! @derivedFrom(field: "madPub")
+}
+
+type MadStream @entity {
+  id: ID!
+  sender: Bytes!
+  receiver: Bytes!
+  profileId: BigInt!
+  pubId: BigInt!
+  flowRate: BigInt!
+  madPub: MadPublication!
+  sponsor: MadSponsor
+}
+
+type MadSponsor @entity {
+  id: ID!
+  streams: [MadStream!]! @derivedFrom(field: "sponsor")
+}
