@@ -39,19 +39,27 @@ contract SponsorModule is IReferenceModule, FollowValidationModuleBase, SuperRec
   mapping (address => mapping (address => uint256)) private sponsorships; // sponsor => receiver => publicationIdPointed
   mapping (address => mapping (uint256 => DataTypes.EIP712Signature)) private sponsorBurnSigs; // sponsor => publicationIdPointed => burn signature
 
+  event InitReferenceModule(
+    uint256 profileId,
+    uint256 pubId,
+    address acccount,
+    address superToken,
+    uint256 flowRate,
+    uint256 minSeconds,
+    string tag
+  );
   event MirrorCreated(
-    address profileAddress,
+    address sponsor,
+    address receiver,
     uint256 profileId,
     uint256 pubId,
     uint256 profileIdPointed,
     uint256 pubIdPointed
   );
-
-  event ReferenceModuleInit(uint256 profileId, uint256 pubId, address _superToken, int96 _flowRate, int96 _minSeconds, string tag);
-  event MirrorStreamUpdated(address sender, address receiver, uint256 pubId, int96 flowRate);
+  event MirrorStreamUpdated(address sender, address receiver, uint256 pubId, uint256 flowRate);
   event MirrorStreamDeleted(address sender, address receiver, uint256 pubId);
 
-  int96 MIRROR_MIN_SECONDS = 3600; // 1hr
+  int96 private MIRROR_MIN_SECONDS = 3600; // 1hr
 
   constructor(address hub, address host) ModuleBase(hub) SuperReceiver(host) {}
 
@@ -78,7 +86,15 @@ contract SponsorModule is IReferenceModule, FollowValidationModuleBase, SuperRec
       minSeconds: _minSeconds
     });
 
-    emit ReferenceModuleInit(profileId, pubId, _superToken, _flowRate, _minSeconds, _tag);
+    emit InitReferenceModule(
+      profileId,
+      pubId,
+      msg.sender,
+      _superToken,
+      uint256(int256(_flowRate)),
+      uint256(int256(_minSeconds)),
+      _tag
+    );
 
     return data;
   }
@@ -92,16 +108,17 @@ contract SponsorModule is IReferenceModule, FollowValidationModuleBase, SuperRec
     uint256 pubIdPointed
   ) external override {
     address sponsor = IERC721(HUB).ownerOf(profileId);
+    address receiver = IERC721(HUB).ownerOf(profileIdPointed);
 
     _validateMirror(
       sponsor,
-      IERC721(HUB).ownerOf(profileIdPointed),
+      receiver,
       mirrorFees[profileIdPointed][pubIdPointed]
     );
 
     uint256 nextPubId = ILensHub(HUB).getPubCount(profileId) + 1;
 
-    emit MirrorCreated(sponsor, profileId, nextPubId, profileIdPointed, pubIdPointed);
+    emit MirrorCreated(sponsor, receiver, profileId, nextPubId, profileIdPointed, pubIdPointed);
   }
 
   /**
@@ -112,17 +129,18 @@ contract SponsorModule is IReferenceModule, FollowValidationModuleBase, SuperRec
     uint256 profileIdPointed,
     uint256 pubIdPointed
   ) external override {
-    address sponsor = IERC721(HUB).ownerOf(profileId);
+    address sponsor = _getTokenOwner(profileId);
+    address receiver = _getTokenOwner(profileIdPointed);
 
     _validateMirror(
       sponsor,
-      _getTokenOwner(profileIdPointed),
+      receiver,
       mirrorFees[profileIdPointed][pubIdPointed]
     );
 
     uint256 nextPubId = ILensHub(HUB).getPubCount(profileId) + 1;
 
-    emit MirrorCreated(sponsor, profileId, nextPubId, profileIdPointed, pubIdPointed);
+    emit MirrorCreated(sponsor, receiver, profileId, nextPubId, profileIdPointed, pubIdPointed);
   }
 
   /**
@@ -186,7 +204,7 @@ contract SponsorModule is IReferenceModule, FollowValidationModuleBase, SuperRec
 
     if (flowRate == int96(0)) {
       uint256 pubId = sponsorships[sender][receiver];
-      ILensHub(HUB).burnWithSig(pubId, sponsorBurnSigs[sender][pubId]);
+      ILensNFTBase(HUB).burnWithSig(pubId, sponsorBurnSigs[sender][pubId]);
 
       delete sponsorships[sender][receiver];
       delete sponsorBurnSigs[sender][pubId];
@@ -204,7 +222,7 @@ contract SponsorModule is IReferenceModule, FollowValidationModuleBase, SuperRec
         deadline: deadline
       });
 
-      emit MirrorStreamUpdated(sender, receiver, publicationId, flowRate);
+      emit MirrorStreamUpdated(sender, receiver, publicationId, uint256(int256(flowRate)));
     }
   }
 

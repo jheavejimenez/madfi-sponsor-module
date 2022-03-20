@@ -18,14 +18,6 @@ module.exports = {
       {
         version: '0.8.10',
         settings
-      },
-      {
-        version: '0.6.6',
-        settings
-      },
-      {
-        version: '0.7.0',
-        settings
       }
     ],
   },
