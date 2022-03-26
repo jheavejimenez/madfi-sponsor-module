@@ -178,7 +178,6 @@ task('create-mirror', 'creates a mirror on a Sponsored post by first creating a 
     process.exit(0);
   }
 
-  // WIP -
   // assuming the above worked, we can now mirror
   console.log('lensHub.mirror()');
   const tx = await lensHub.connect(sponsor).mirror({

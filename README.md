@@ -30,7 +30,7 @@ yarn deploy:mumbai
 
 2. spin up the docker container with their contracts env, and run hardhat node in there
 ```
-export USERID=root && docker-compose build && docker-compose run contracts-env bash
+export USERID=root && docker-compose build && docker-compose -p 8545:8545 run contracts-env bash
 
 ...
 
@@ -50,8 +50,8 @@ export USERID=root && docker exec -it <docker-container-name> bash
 
 8. assuming that worked, you have to unpause the lens protocol with `npx hardhat unpause --network localhost`
 
-9. back in this repo, you can create a profile (make sure to set some ENV variables defined in `tasks/create-profile.js`  by running `npx hardhat create-profile --network docker`. also create a profile for the sponsor by changing the handle and using the signer for `sponsor` (line 24)
+9. back in this repo, you can create a profile (make sure to set some ENV variables defined in `tasks/create-profile.js`  by running `npx hardhat create-profile --network docker`. also create another profile for the sponsor by changing the handle and using the signer for `sponsor` (line 24)
 
 10. finally, create a post and attach our deployed `SponsorModule` as the reference module `npx hardhat create-post --network docker`
 
-11. WIP - create a money stream betweent the sponsor and the user for the user's latest publication, and then the sponsor attempts to mirror it `npx hardhat create-mirror --network docker` 
+11. create a money stream between the sponsor and the user for the user's latest publication, and then the sponsor attempts to mirror it `npx hardhat create-mirror --network docker`
