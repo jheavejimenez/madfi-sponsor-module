@@ -41,11 +41,13 @@ contract SuperReceiver is SuperAppBase {
     _;
   }
 
-  constructor(address host) {
+  constructor(address host, address cfa) {
     require(host != address(0), "SuperReceiver:: host is zero address");
 
     _host = ISuperfluid(host);
-    _cfa = IConstantFlowAgreementV1(address(_host.getAgreementClass(keccak256(SF_CFA_ID))));
+    _cfa = cfa != address(0)
+      ? IConstantFlowAgreementV1(cfa)
+      : IConstantFlowAgreementV1(address(_host.getAgreementClass(keccak256(SF_CFA_ID))));
 
     uint256 configWord =
       SuperAppDefinitions.APP_LEVEL_FINAL |
@@ -64,14 +66,14 @@ contract SuperReceiver is SuperAppBase {
     uint256 publicationId,
     address sender,
     address receiver,
-    int96 flowRate,
-    bytes memory burnSig
+    int96 flowRate
+    // bytes memory burnSig
   ) internal virtual {}
 
   /**
-   * @dev to be overridden by SponsorModule to retrieve the owner of given `tokenId`
+   * @dev to be overridden by SponsorModule to retrieve the owner of given profile with `tokenId`
    */
-  function _getTokenOwner(uint256 tokenId) internal virtual returns (address) {}
+  function _getProfileOwner(uint256 tokenId) internal virtual returns (address) {}
 
   /**************************************************************************
    * SuperApp callbacks
@@ -173,29 +175,26 @@ contract SuperReceiver is SuperAppBase {
 
   /**
    * @dev decode input data, validate the sender+receiver, and update storage data regarding the sponsorship
+   * avoiding callstack too deep by passing in ctc/agreementData as memory
    */
   function _processInput(
     ISuperToken superToken,
-    bytes calldata ctx,
-    bytes calldata agreementData
+    bytes memory ctx,
+    bytes memory agreementData
   ) private returns (address receiver, int96 outFlowRate, int96 inFlowRate) {
     ISuperfluid.Context memory decompiledContext = _host.decodeCtx(ctx);
     int96 netFlowRate = _cfa.getNetFlow(superToken, address(this));
+    (address sender, address _receiver) = abi.decode(agreementData, (address, address));
 
-    address sender;
     uint256 profileId;
     uint256 publicationId;
-    bytes memory burnSig;
+    // bytes memory burnSig;
 
     if (decompiledContext.userData.length != 0) { // should be the case when a stream is being created/updated
-      (profileId, publicationId, burnSig) = abi.decode(decompiledContext.userData, (uint256, uint256, bytes));
-
-      sender = decompiledContext.msgSender;
-      receiver = _getTokenOwner(profileId);
+      (profileId, publicationId) = abi.decode(decompiledContext.userData, (uint256, uint256));
+      receiver = _getProfileOwner(profileId); // override with actual receiver being the profileId owner
     } else {
-      // in the case that the Sentinel closed out the stream, cannot rely on either `decompiledContext` or `userData`
-
-      (sender, receiver) = abi.decode(agreementData, (address, address));
+      receiver = _receiver; // sentinel or stream close via sf dashboard would not pass in `userData`
     }
 
     // sanity checks
@@ -207,7 +206,7 @@ contract SuperReceiver is SuperAppBase {
     inFlowRate = netFlowRate + outFlowRate;
 
     // bubble up info to update storage in SponsorModule
-    _onFlowUpdated(profileId, publicationId, sender, receiver, inFlowRate, burnSig);
+    _onFlowUpdated(profileId, publicationId, sender, receiver, inFlowRate);
 
     return (receiver, outFlowRate, inFlowRate);
   }

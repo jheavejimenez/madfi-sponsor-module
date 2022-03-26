@@ -3,6 +3,7 @@ pragma solidity ^0.8.10;
 
 import {IReferenceModule} from "lens-protocol/contracts/interfaces/IReferenceModule.sol";
 import {ModuleBase} from "lens-protocol/contracts/core/modules/ModuleBase.sol";
+import {Errors} from 'lens-protocol/contracts/libraries/Errors.sol';
 import {FollowValidationModuleBase} from "lens-protocol/contracts/core/modules/FollowValidationModuleBase.sol";
 import {ILensHub} from 'lens-protocol/contracts/interfaces/ILensHub.sol';
 import {ILensNFTBase} from 'lens-protocol/contracts/interfaces/ILensNFTBase.sol';
@@ -12,6 +13,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ISuperToken} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
 import {SuperReceiver} from "./superfluid/SuperReceiver.sol";
 import {Int96SafeMath} from "./utils/Int96SafeMath.sol";
+import "hardhat/console.sol";
 
 /**
  * @title SponsorModule
@@ -27,7 +29,6 @@ contract SponsorModule is IReferenceModule, FollowValidationModuleBase, SuperRec
 
   error StreamNotFound();
   error InsufficientMirrorFee();
-  error InitParamsInvalid();
 
   struct MirrorFee {
     address superToken; // accepted SuperToken (upgraded ERC20)
@@ -61,7 +62,7 @@ contract SponsorModule is IReferenceModule, FollowValidationModuleBase, SuperRec
 
   int96 private MIRROR_MIN_SECONDS = 3600; // 1hr
 
-  constructor(address hub, address host) ModuleBase(hub) SuperReceiver(host) {}
+  constructor(address hub, address host, address cfa) ModuleBase(hub) SuperReceiver(host, cfa) {}
 
   /**
    * @dev The profile specifies requirements for a mirror
@@ -77,7 +78,7 @@ contract SponsorModule is IReferenceModule, FollowValidationModuleBase, SuperRec
     (address _superToken, int96 _flowRate, int96 _minSeconds, string memory _tag) = abi.decode(data, (address, int96, int96, string));
 
     if (_superToken == address(0) || _flowRate == 0 || _minSeconds < MIRROR_MIN_SECONDS) {
-      revert InitParamsInvalid();
+      revert Errors.InitParamsInvalid();
     }
 
     mirrorFees[profileId][pubId] = MirrorFee({
@@ -110,6 +111,8 @@ contract SponsorModule is IReferenceModule, FollowValidationModuleBase, SuperRec
     address sponsor = IERC721(HUB).ownerOf(profileId);
     address receiver = IERC721(HUB).ownerOf(profileIdPointed);
 
+    console.log("sponsor is %s and receiver is %s", sponsor, receiver);
+
     _validateMirror(
       sponsor,
       receiver,
@@ -129,8 +132,8 @@ contract SponsorModule is IReferenceModule, FollowValidationModuleBase, SuperRec
     uint256 profileIdPointed,
     uint256 pubIdPointed
   ) external override {
-    address sponsor = _getTokenOwner(profileId);
-    address receiver = _getTokenOwner(profileIdPointed);
+    address sponsor = _getProfileOwner(profileId);
+    address receiver = _getProfileOwner(profileIdPointed);
 
     _validateMirror(
       sponsor,
@@ -155,8 +158,8 @@ contract SponsorModule is IReferenceModule, FollowValidationModuleBase, SuperRec
 
     if (profileIdPointed == 0 && pubIdPointed == 0) return false;
 
-    address sponsor = _getTokenOwner(sponsorProfileId);
-    address receiver = _getTokenOwner(profileIdPointed);
+    address sponsor = _getProfileOwner(sponsorProfileId);
+    address receiver = _getProfileOwner(profileIdPointed);
 
     return sponsorships[sponsor][receiver] != 0;
   }
@@ -171,11 +174,11 @@ contract SponsorModule is IReferenceModule, FollowValidationModuleBase, SuperRec
       revert StreamNotFound();
     }
 
-    (,int96 flowRate,,) = _cfa.getFlow(ISuperToken(fee.superToken), sponsor, pubOwner);
+    (,int96 flowRate,,) = _cfa.getFlow(ISuperToken(fee.superToken), address(this), pubOwner);
 
     // @TODO: if conditions are not met - should we cancel the stream for the sponsor?
     if (!_checkAboveThreshold(fee, flowRate, sponsor)) {
-        revert InsufficientMirrorFee();
+      revert InsufficientMirrorFee();
     }
   }
 
@@ -191,16 +194,17 @@ contract SponsorModule is IReferenceModule, FollowValidationModuleBase, SuperRec
     uint256 publicationId,
     address sender,
     address receiver,
-    int96 flowRate,
-    bytes calldata burnSig
+    int96 flowRate
+    // bytes calldata burnSig
   ) internal override {
     // in the case that we were unable to decode from `userData` - it should be in storage already
     if (publicationId == 0) {
       publicationId = sponsorships[sender][receiver];
     }
 
+    // NOTE: cannot do this as publications are not tokens, and not unique across profiles
     // sanity check
-    require(receiver == _getTokenOwner(publicationId), "SponsorModule:: receiver is not the owner of publicationId");
+    // require(receiver == _getProfileOwner(publicationId), "SponsorModule:: receiver is not the owner of publicationId");
 
     if (flowRate == int96(0)) {
       uint256 pubId = sponsorships[sender][receiver];
@@ -213,20 +217,23 @@ contract SponsorModule is IReferenceModule, FollowValidationModuleBase, SuperRec
     } else {
       sponsorships[sender][receiver] = publicationId;
 
-      (uint8 v, bytes32 r, bytes32 s, uint256 deadline) = abi.decode(burnSig, (uint8, bytes32, bytes32, uint256));
-
-      sponsorBurnSigs[sender][publicationId] = DataTypes.EIP712Signature({
-        v: v,
-        r: r,
-        s: s,
-        deadline: deadline
-      });
+      // (uint8 v, bytes32 r, bytes32 s, uint256 deadline) = abi.decode(burnSig, (uint8, bytes32, bytes32, uint256));
+      //
+      // sponsorBurnSigs[sender][publicationId] = DataTypes.EIP712Signature({
+      //   v: v,
+      //   r: r,
+      //   s: s,
+      //   deadline: deadline
+      // });
 
       emit MirrorStreamUpdated(sender, receiver, publicationId, uint256(int256(flowRate)));
     }
   }
 
-  function _getTokenOwner(uint256 tokenId) internal override view returns (address) {
+  /**
+   * @dev if you look at LensHub#createProfile, it actually mints a token for the profile
+   */
+  function _getProfileOwner(uint256 tokenId) internal override view returns (address) {
     return IERC721(HUB).ownerOf(tokenId);
   }
 
@@ -238,9 +245,12 @@ contract SponsorModule is IReferenceModule, FollowValidationModuleBase, SuperRec
    * @param sponsor The account attempting to mirror
    */
   function _checkAboveThreshold(MirrorFee storage fee, int96 flowRate, address sponsor) internal view returns (bool) {
+    console.log("_checkAboveThreshold");
+    console.log("flowRate is %i and fee is %i", uint256(int256(flowRate)), uint256(int256(fee.flowRate)));
     if (flowRate < fee.flowRate) return false;
 
     uint256 committedBalance = IERC20(fee.superToken).balanceOf(sponsor);
+    console.log("committed balance is %s", committedBalance);
 
     return committedBalance >= uint256(int256(fee.flowRate.mul(fee.minSeconds, "SponsorModule:: invalid math")));
   }

@@ -1,61 +1,44 @@
 const hre = require("hardhat");
-const deployFramework = require('@superfluid-finance/ethereum-contracts/scripts/deploy-framework');
-const deployTestToken = require('@superfluid-finance/ethereum-contracts/scripts/deploy-test-token');
-const deploySuperToken = require('@superfluid-finance/ethereum-contracts/scripts/deploy-super-token');
-const SuperfluidSDK = require('@superfluid-finance/js-sdk');
-const { updateContractsDeployed, config } = require('./../scripts/utils/migrations');
-
-const getArgs = ({ name }, deployer, superfluidOptions = undefined) => {
-  console.log(`getArgs:: from: ${name}`);
-  let _config = config[name]?.SponsorModule;
-
-  if (superfluidOptions) {
-    console.log('using superfluidOptions');
-    _config = {
-      ..._config,
-      ...superfluidOptions
-    };
-  }
-
-  console.log(JSON.stringify(_config, null, 2));
-
-  return Object.keys(_config).map((k) => _config[k]);
-};
-
-const deploySuperfluid = async (web3, deployer) => {
-  await deployFramework((error) => { console.log(error) }, { web3, from: deployer });
-  await deployTestToken((error) => { console.log(error) }, [':', 'fDAI'], { web3, from: deployer });
-  await deploySuperToken((error) => { console.log(error) }, [':', 'fDAI'], { web3, from: deployer });
-
-  sf = new SuperfluidSDK.Framework({ web3, version: 'test', tokens: ['fDAI'] });
-  await sf.initialize();
-
-  return {
-    host: sf.host.address,
-    cfa: sf.agreements.cfa.address,
-    acceptedToken: (await sf.tokens.fDAI.address)
-  };
-}
+const {
+  updateContractsDeployed,
+  updateContractsDeployedLens,
+  config,
+  contractsDeployed,
+  lensAddresses
+} = require('./../scripts/utils/migrations');
 
 module.exports = async ({ getNamedAccounts, deployments, network }) => {
   const { deploy } = deployments;
-  const { deployer } = await getNamedAccounts();
+  const ethers = hre.ethers;
+  const networkName = hre.network.name;
+  const accounts = await ethers.getSigners();
+  const deployer = accounts[0].address;
 
-  // skip deploy on `npx hardhat node`
-  if (network.name === 'hardhat') return;
+  // !! AFTER running `npx hardhat full-deploy-local` in the docker container
+  const LENS_HUB_PROXY = lensAddresses['lensHub proxy'];
+  if (!LENS_HUB_PROXY) throw new Error ('need to define LENS_HUB_PROXY');
 
-  let options;
-  if (network.name === 'localhost') {
-    options = await deploySuperfluid(hre.web3, deployer);
-  }
+  // !! AFTER running the first deploy at '00_deploy_superfluid.js'
+  const { host, cfa } = contractsDeployed.Superfluid;
+  if (!(host && cfa)) throw new Error ('missing superfluid deployment');
+
+  console.log('\n\t-- Deploying SponsorModule --');
+  console.log(JSON.stringify({
+    hub: LENS_HUB_PROXY,
+    host,
+    cfa
+  }, null, 2));
 
   const { address } = await deploy('SponsorModule', {
     from: deployer,
-    args: getArgs(network, deployer, options),
+    args: [LENS_HUB_PROXY, host, cfa],
     log: true,
   });
 
-  updateContractsDeployed('SponsorModule', address, network.name);
+  console.log(`SponsorModule deployed at: ${address}`);
+
+  updateContractsDeployed('SponsorModule', address, networkName);
+  updateContractsDeployedLens('SponsorModule', address);
 };
 
 module.exports.tags = ['SponsorModule'];
