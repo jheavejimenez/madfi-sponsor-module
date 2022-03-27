@@ -12,11 +12,11 @@ function _accountId(account: Address): String {
 }
 
 function _madPubId(pubOwner: Address, pubId: BigInt): String {
-  return `${_accountId(pubOwner)}/${pubId.toString()}`;
+  return `${_accountId(pubOwner)}-${pubId.toString()}`;
 }
 
 function _madStreamId(madPubId: String, sender: Address): String {
-  return `${madPubId}/${_accountId(sender)}`;
+  return `${madPubId}-${_accountId(sender)}`;
 }
 
 export function handleInitReferenceModule(event: InitReferenceModule): void {
