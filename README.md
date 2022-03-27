@@ -1,6 +1,8 @@
 # madfi-sponsor-module
 A [Lens](https://lens.dev) Reference Module that enables real-time monetization of your content.
 
+Frontend repo: https://github.com/c0rv0s/madfi-fe
+
 ## setup
 first - clone and install `lens-protocol` repo, then create a symlink
 ```
