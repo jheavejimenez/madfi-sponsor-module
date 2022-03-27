@@ -62,12 +62,13 @@ contract SuperReceiver is SuperAppBase {
    * @dev to be overridden by SponsorModule to handle callback data
    */
   function _onFlowUpdated(
-    uint256 profileId,
+    uint256 profileIdPointed,
     uint256 publicationId,
+    uint256 profileId,
     address sender,
     address receiver,
-    int96 flowRate
-    // bytes memory burnSig
+    int96 flowRate,
+    bytes memory burnSig
   ) internal virtual {}
 
   /**
@@ -186,13 +187,14 @@ contract SuperReceiver is SuperAppBase {
     int96 netFlowRate = _cfa.getNetFlow(superToken, address(this));
     (address sender, address _receiver) = abi.decode(agreementData, (address, address));
 
-    uint256 profileId;
+    uint256 profileIdPointed;
     uint256 publicationId;
-    // bytes memory burnSig;
+    uint256 profileId; // the sponsor profile id
+    string memory _burnSig;
 
     if (decompiledContext.userData.length != 0) { // should be the case when a stream is being created/updated
-      (profileId, publicationId) = abi.decode(decompiledContext.userData, (uint256, uint256));
-      receiver = _getProfileOwner(profileId); // override with actual receiver being the profileId owner
+      (profileIdPointed, publicationId, profileId, _burnSig) = abi.decode(decompiledContext.userData, (uint256, uint256, uint256, string));
+      receiver = _getProfileOwner(profileIdPointed); // override with actual receiver being the profileId owner
     } else {
       receiver = _receiver; // sentinel or stream close via sf dashboard would not pass in `userData`
     }
@@ -206,7 +208,7 @@ contract SuperReceiver is SuperAppBase {
     inFlowRate = netFlowRate + outFlowRate;
 
     // bubble up info to update storage in SponsorModule
-    _onFlowUpdated(profileId, publicationId, sender, receiver, inFlowRate);
+    _onFlowUpdated(profileIdPointed, publicationId, profileId, sender, receiver, inFlowRate, bytes(_burnSig));
 
     return (receiver, outFlowRate, inFlowRate);
   }

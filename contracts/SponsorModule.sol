@@ -38,6 +38,7 @@ contract SponsorModule is IReferenceModule, FollowValidationModuleBase, SuperRec
 
   mapping (uint256 => mapping (uint256 => MirrorFee)) private mirrorFees; // profileId => pubId => fee data
   mapping (address => mapping (address => uint256)) private sponsorships; // sponsor => receiver => publicationIdPointed
+  mapping (address => mapping (address => uint256)) private sponsorshipProfiles; // sponsor => receiver => sponsorProfileId
   mapping (address => mapping (uint256 => DataTypes.EIP712Signature)) private sponsorBurnSigs; // sponsor => publicationIdPointed => burn signature
 
   event InitReferenceModule(
@@ -188,43 +189,53 @@ contract SponsorModule is IReferenceModule, FollowValidationModuleBase, SuperRec
    * @param sender the account that triggered the change
    * @param receiver the account to receive the stream (the publication owner)
    * @param flowRate the new stream flow rate (see SponsorReceiver.sol)
+   * @param burnSig the signature from sponsor so we can update the post with empty contentURI once the sponsorship ends
    */
   function _onFlowUpdated(
-    uint256, // profileIdPointed
+    uint256 profileIdPointed,
     uint256 publicationId,
+    uint256 profileId,
     address sender,
     address receiver,
-    int96 flowRate
-    // bytes calldata burnSig
+    int96 flowRate,
+    bytes calldata burnSig
   ) internal override {
     // in the case that we were unable to decode from `userData` - it should be in storage already
     if (publicationId == 0) {
       publicationId = sponsorships[sender][receiver];
+      profileId = sponsorshipProfiles[sender][receiver];
     }
 
-    // NOTE: cannot do this as publications are not tokens, and not unique across profiles
+    console.log("_onFlowUpdated");
+    console.log("profileIdPointed: %i", profileIdPointed);
+    console.log("publicationId: %i", publicationId);
+    console.log("profileId: %i", profileId);
+    console.log("sender: %s", sender);
+
     // sanity check
-    // require(receiver == _getProfileOwner(publicationId), "SponsorModule:: receiver is not the owner of publicationId");
+    require(receiver == _getProfileOwner(profileIdPointed), "SponsorModule:: receiver is not the owner of profileIdPointed");
 
     if (flowRate == int96(0)) {
-      uint256 pubId = sponsorships[sender][receiver];
-      ILensNFTBase(HUB).burnWithSig(pubId, sponsorBurnSigs[sender][pubId]);
+      ILensHub(HUB).updatePostWithSig(profileId, publicationId, sponsorBurnSigs[sender][publicationId]);
+      console.log("burned!");
 
       delete sponsorships[sender][receiver];
-      delete sponsorBurnSigs[sender][pubId];
+      delete sponsorshipProfiles[sender][receiver];
+      delete sponsorBurnSigs[sender][publicationId];
 
       emit MirrorStreamDeleted(sender, receiver, publicationId);
     } else {
       sponsorships[sender][receiver] = publicationId;
+      sponsorshipProfiles[sender][receiver] = profileId;
 
-      // (uint8 v, bytes32 r, bytes32 s, uint256 deadline) = abi.decode(burnSig, (uint8, bytes32, bytes32, uint256));
-      //
-      // sponsorBurnSigs[sender][publicationId] = DataTypes.EIP712Signature({
-      //   v: v,
-      //   r: r,
-      //   s: s,
-      //   deadline: deadline
-      // });
+      (uint8 v, bytes32 r, bytes32 s, uint256 deadline) = abi.decode(burnSig, (uint8, bytes32, bytes32, uint256));
+
+      sponsorBurnSigs[sender][publicationId] = DataTypes.EIP712Signature({
+        v: v,
+        r: r,
+        s: s,
+        deadline: deadline
+      });
 
       emit MirrorStreamUpdated(sender, receiver, publicationId, uint256(int256(flowRate)));
     }

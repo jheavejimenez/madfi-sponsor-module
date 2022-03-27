@@ -6,7 +6,7 @@ dataSources:
     name: SponsorModule
     network: mainnet
     source:
-      address: "0x9D2F6Ec881323E78f27d58b996b81EaBCEF8eC58"
+      address: "0x7cFdBc7907cb4d1d27DcE75609be7dfe8a4F1340"
       abi: SponsorModule
     mapping:
       kind: ethereum/events

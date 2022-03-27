@@ -22,6 +22,7 @@ const _getLensHub = async (ethers, signer) => {
   return { lensHub: contract.connect(signer) };
 };
 
+// actually now is `UpdatePostWithSig`
 const _buildBurnWithSigParams = (
   nft,
   name,
@@ -30,7 +31,7 @@ const _buildBurnWithSigParams = (
   deadline
 ) => ({
   types: {
-    BurnWithSig: [
+    UpdatePostWithSig: [
       { name: 'tokenId', type: 'uint256' },
       { name: 'nonce', type: 'uint256' },
       { name: 'deadline', type: 'uint256' },
@@ -134,11 +135,13 @@ task('create-mirror', 'creates a mirror on a Sponsored post by first creating a 
 
   // LIKELY NOT GOING TO BE USED AS POSTS ARE NOT NFTs :/
   // this is to be decoded in the contract to later burn the nft once the stream is closed
+  // NOW USED TO UPDATE POSTS :')'
   const burnData = await getBurnSig(lensHub, ethers, sponsor, profileId);
 
+  // @TODO: passing in the encoded signature messes with the entire payload 
   const userData = ethers.utils.defaultAbiCoder.encode(
-    ['uint256', 'uint256'],
-    [profileIdPointed, pubIdPointed]
+    ['uint256', 'uint256', 'uint256', 'string'],
+    [profileIdPointed, pubIdPointed, profileId, ethers.utils.hexlify(burnData)]
   );
 
   // const flowRate = ethers.utils.parseUnits('0.0001', 'ether');
