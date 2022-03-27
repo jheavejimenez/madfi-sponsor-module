@@ -1,4 +1,4 @@
-import { BigInt, Address, store } from "@graphprotocol/graph-ts"
+import { BigInt, Address, store, log } from "@graphprotocol/graph-ts"
 import {
   InitReferenceModule,
   MirrorCreated,
@@ -15,7 +15,6 @@ function _madPubId(pubOwner: Address, pubId: BigInt): String {
   return `${_accountId(pubOwner)}/${pubId.toString()}`;
 }
 
-// since only one stream per 2 accounts can exist - reuse the id for MadStream and MadSponsor
 function _madStreamId(madPubId: String, sender: Address): String {
   return `${madPubId}/${_accountId(sender)}`;
 }
@@ -34,6 +33,7 @@ export function handleInitReferenceModule(event: InitReferenceModule): void {
   } else {
     if (creator.tags.indexOf(event.params.tag) === -1) {
       creator.tags.push(event.params.tag);
+      creator.save();
     }
   }
 
@@ -64,19 +64,21 @@ export function handleMirrorStreamUpdated(event: MirrorStreamUpdated): void {
 }
 
 export function handleMirrorCreated(event: MirrorCreated): void {
-  const streamId = _madStreamId(_madPubId(event.params.receiver, event.params.pubId), event.params.sponsor);
+  const madPubId = _madPubId(event.params.receiver, event.params.pubIdPointed);
+  const streamId = _madStreamId(madPubId, event.params.sponsor);
   const sponsorId = _accountId(event.params.sponsor);
 
   const stream = MadStream.load(streamId);
 
   if (stream) {
     let entity = MadSponsor.load(sponsorId);
-    if (entity === null) {
+    if (!entity) {
       entity = new MadSponsor(sponsorId);
       entity.save();
     }
 
     stream.sponsor = sponsorId;
+    stream.save();
   }
 }
 

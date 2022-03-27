@@ -7,13 +7,13 @@ type MadCreator @entity {
 type MadPublication @entity {
 	id: ID!
 	referenceModule: Bytes!
-  creator: MadCreator!
   profileId: BigInt!
   pubId: BigInt!
   superToken: Bytes!
   flowRate: BigInt!
   minSeconds: BigInt!
   tag: String!
+  creator: MadCreator!
   streams: [MadStream!]! @derivedFrom(field: "madPub")
 }
 

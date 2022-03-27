@@ -69,13 +69,13 @@ export class MadPublication extends Entity {
     this.set("id", Value.fromString(id));
 
     this.set("referenceModule", Value.fromBytes(Bytes.empty()));
-    this.set("creator", Value.fromString(""));
     this.set("profileId", Value.fromBigInt(BigInt.zero()));
     this.set("pubId", Value.fromBigInt(BigInt.zero()));
     this.set("superToken", Value.fromBytes(Bytes.empty()));
     this.set("flowRate", Value.fromBigInt(BigInt.zero()));
     this.set("minSeconds", Value.fromBigInt(BigInt.zero()));
     this.set("tag", Value.fromString(""));
+    this.set("creator", Value.fromString(""));
   }
 
   save(): void {
@@ -110,15 +110,6 @@ export class MadPublication extends Entity {
 
   set referenceModule(value: Bytes) {
     this.set("referenceModule", Value.fromBytes(value));
-  }
-
-  get creator(): string {
-    let value = this.get("creator");
-    return value!.toString();
-  }
-
-  set creator(value: string) {
-    this.set("creator", Value.fromString(value));
   }
 
   get profileId(): BigInt {
@@ -173,6 +164,15 @@ export class MadPublication extends Entity {
 
   set tag(value: string) {
     this.set("tag", Value.fromString(value));
+  }
+
+  get creator(): string {
+    let value = this.get("creator");
+    return value!.toString();
+  }
+
+  set creator(value: string) {
+    this.set("creator", Value.fromString(value));
   }
 
   get streams(): Array<string> {
