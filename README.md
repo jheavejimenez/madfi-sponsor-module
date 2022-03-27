@@ -3,6 +3,8 @@ A [Lens](https://lens.dev) Reference Module that enables real-time monetization 
 
 Frontend repo: https://github.com/c0rv0s/madfi-fe
 
+Forked lens repo (for local dev): https://github.com/imthatcarlos/lens-protocol/tree/feature/madfi-sponsor-module
+
 ## setup
 first - clone and install `lens-protocol` repo, then create a symlink
 ```
