@@ -10,7 +10,8 @@
     "deploy:mumbai": "npx hardhat deploy --network mumbai",
     "deploy:docker": "npx hardhat deploy --network docker --reset && cp -r ./../lens-protocol/artifacts/contracts/core/LensHub.sol ./build/contracts/",
     "subgraph:init": "npx graph init --product hosted-service --network mumbai --from-contract 0x00",
-    "etherscan:verify": "npx hardhat verify --network mumbai 0x00 --constructor-args ./scripts/utils/verifyArgs.js"
+    "etherscan:verify": "npx hardhat verify --network mumbai 0x00 --constructor-args ./scripts/utils/verifyArgs.js",
+    "demo:docker": "npx hardhat create-post --network docker && npx hardhat create-mirror --network docker"
   },
   "dependencies": {
     "@decentral.ee/web3-helpers": "^0.5.3",

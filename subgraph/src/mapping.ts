@@ -20,7 +20,10 @@ function _madStreamId(madPubId: String, sender: Address): String {
 }
 
 export function handleInitReferenceModule(event: InitReferenceModule): void {
-  const entity = new MadPublication(_madPubId(event.params.account, event.params.pubId));
+  const madPubId = _madPubId(event.params.account, event.params.pubId)
+  const entity = new MadPublication(madPubId);
+
+  log.info("creating a new publication {}", [madPubId]);
 
   entity.referenceModule = event.address;
 
@@ -54,9 +57,13 @@ export function handleMirrorStreamUpdated(event: MirrorStreamUpdated): void {
   let entity = MadStream.load(streamId);
   if (!entity) {
     entity = new MadStream(streamId);
+    log.info("creating a new stream {} with madPubId {}", [streamId, madPubId]);
+
     entity.sender = event.params.sender;
     entity.receiver = event.params.receiver;
     entity.madPub = madPubId;
+  } else {
+    log.error("wtf there is a stream already {}", [streamId]);
   }
 
   entity.flowRate = event.params.flowRate;
@@ -69,6 +76,8 @@ export function handleMirrorCreated(event: MirrorCreated): void {
   const sponsorId = _accountId(event.params.sponsor);
 
   const stream = MadStream.load(streamId);
+
+  log.info("trying to load stream {} with madPubId {}", [streamId, madPubId]);
 
   if (stream) {
     let entity = MadSponsor.load(sponsorId);

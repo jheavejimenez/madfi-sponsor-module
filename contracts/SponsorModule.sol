@@ -90,7 +90,7 @@ contract SponsorModule is IReferenceModule, FollowValidationModuleBase, SuperRec
     emit InitReferenceModule(
       profileId,
       pubId,
-      msg.sender,
+      IERC721(HUB).ownerOf(profileId),
       _superToken,
       uint256(int256(_flowRate)),
       uint256(int256(_minSeconds)),
