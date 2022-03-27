@@ -23,3 +23,5 @@ typechain-types
 
 scripts/utils/localhost-contracts.json
 scripts/utils/docker-contracts.json
+
+.DS_Store

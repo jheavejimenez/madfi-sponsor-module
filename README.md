@@ -34,7 +34,7 @@ yarn deploy:mumbai
 
 2. spin up the docker container with their contracts env, and run hardhat node in there
 ```
-export USERID=root && docker-compose build && docker-compose -p 8545:8545 run contracts-env bash
+export USERID=root && docker-compose build && docker-compose run -p 8545:8545 contracts-env bash
 
 ...
 
