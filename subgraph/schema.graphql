@@ -14,6 +14,7 @@ type MadPublication @entity {
   minSeconds: BigInt!
   tag: String!
   creator: MadCreator!
+  uri: String!
   streams: [MadStream!]! @derivedFrom(field: "madPub")
 }
 

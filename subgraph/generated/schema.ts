@@ -76,6 +76,7 @@ export class MadPublication extends Entity {
     this.set("minSeconds", Value.fromBigInt(BigInt.zero()));
     this.set("tag", Value.fromString(""));
     this.set("creator", Value.fromString(""));
+    this.set("uri", Value.fromString(""));
   }
 
   save(): void {
@@ -173,6 +174,15 @@ export class MadPublication extends Entity {
 
   set creator(value: string) {
     this.set("creator", Value.fromString(value));
+  }
+
+  get uri(): string {
+    let value = this.get("uri");
+    return value!.toString();
+  }
+
+  set uri(value: string) {
+    this.set("uri", Value.fromString(value));
   }
 
   get streams(): Array<string> {

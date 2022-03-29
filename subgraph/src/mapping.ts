@@ -5,17 +5,18 @@ import {
   MirrorStreamDeleted,
   MirrorStreamUpdated
 } from "../generated/SponsorModule/SponsorModule"
+import {PostCreated} from "../generated/LensEvents/Events"
 import { MadPublication, MadCreator, MadSponsor, MadStream } from "../generated/schema"
 
 function _accountId(account: Address): String {
   return `${account.toHexString().toLowerCase()}`;
 }
 
-function _madPubId(pubOwner: Address, pubId: BigInt): String {
+function _madPubId(pubOwner: Address, pubId: BigInt): string {
   return `${_accountId(pubOwner)}-${pubId.toString()}`;
 }
 
-function _madStreamId(madPubId: String, sender: Address): String {
+function _madStreamId(madPubId: String, sender: Address): string {
   return `${madPubId}-${_accountId(sender)}`;
 }
 
@@ -48,6 +49,15 @@ export function handleInitReferenceModule(event: InitReferenceModule): void {
   entity.minSeconds = event.params.minSeconds;
   entity.tag = event.params.tag;
   entity.save();
+}
+
+export function handlePostCreated(event: PostCreated): void {
+  const madPubId = _madPubId(event.transaction.from, event.params.pubId);
+  const madPub = MadPublication.load(madPubId)
+  if (madPub != null) {
+    madPub.uri = event.params.contentURI
+    madPub.save()
+  }
 }
 
 export function handleMirrorStreamUpdated(event: MirrorStreamUpdated): void {
