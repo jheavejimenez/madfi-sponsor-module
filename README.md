@@ -2,8 +2,8 @@
 A [Lens](https://lens.dev) Reference Module that enables real-time monetization of your content.
 
 Frontend repo: https://github.com/c0rv0s/madfi-fe
-
 Forked lens repo (for local dev): https://github.com/imthatcarlos/lens-protocol/tree/feature/madfi-sponsor-module
+attempt at adding to LenHub `updatePostWithSig()`: https://github.com/imthatcarlos/lens-protocol/pull/1
 
 ## setup
 first - clone and install `lens-protocol` repo, then create a symlink
