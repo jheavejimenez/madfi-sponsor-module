@@ -196,6 +196,7 @@ export class MadStream extends Entity {
     this.set("pubId", Value.fromBigInt(BigInt.zero()));
     this.set("flowRate", Value.fromBigInt(BigInt.zero()));
     this.set("madPub", Value.fromString(""));
+    this.set("createdAt", Value.fromBigInt(BigInt.zero()));
   }
 
   save(): void {
@@ -292,6 +293,15 @@ export class MadStream extends Entity {
     } else {
       this.set("sponsor", Value.fromString(<string>value));
     }
+  }
+
+  get createdAt(): BigInt {
+    let value = this.get("createdAt");
+    return value!.toBigInt();
+  }
+
+  set createdAt(value: BigInt) {
+    this.set("createdAt", Value.fromBigInt(value));
   }
 }
 

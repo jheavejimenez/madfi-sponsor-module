@@ -62,6 +62,7 @@ export function handleMirrorStreamUpdated(event: MirrorStreamUpdated): void {
     entity.sender = event.params.sender;
     entity.receiver = event.params.receiver;
     entity.madPub = madPubId;
+    entity.createdAt = event.block.timestamp;
   } else {
     log.error("wtf there is a stream already {}", [streamId]);
   }
