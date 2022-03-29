@@ -90,14 +90,13 @@ const getBurnSig = async (lensHub, ethers, sponsorWallet, profileId) => {
 // 1. Click “Top-Up + Sponsor” (first approves the transfer of USDC to the Super Token contract to upgrade; unless there is already a balance of USDCx in the wallet)
 // 2. createStream with the post owner
 // 3. Sign + submit mirror tx
-task('create-mirror', 'creates a mirror on a Sponsored post by first creating a money stream with its owner').setAction(async ({}, hre) => {
+task('superfluid-top-up', 'tops up the sponsor wallet with supertoken fUSDCx').setAction(async ({}, hre) => {
   const ethers = hre.ethers;
   const networkName = hre.network.name;
-  const [_, governance, user, sponsor] = await ethers.getSigners(); // uses priv key defined in this hardhat config
+  const [_, governance, __, sponsor] = await ethers.getSigners(); // uses priv key defined in this hardhat config
   const { lensHub } = await _getLensHub(ethers, governance);
 
   console.log(`sponsor: ${sponsor.address}`);
-  console.log(`user: ${user.address}`);
 
   // superfuid
   const sf = await Framework.create({
@@ -116,69 +115,13 @@ task('create-mirror', 'creates a mirror on a Sponsored post by first creating a 
   let token = await new ethers.Contract(Superfluid.fUSDC, ERC20ABI, _); // mintable
   const superToken = await sf.loadSuperToken('fUSDCx');
 
-  // @TODO: get from lens api
-  const profileIdPointed = 1;
-  const pubIdPointed = await lensHub.getPubCount(profileIdPointed); // mirror the latest one
-  const profileId = 2; // sponsor profileId
-  console.log(`encoding: ${profileIdPointed}, ${pubIdPointed}, burnData`);
+  await token.mint(sponsor.address, '999999000000000000000000');
+  token = await new ethers.Contract(Superfluid.fUSDC, ERC20ABI, sponsor); // approve from sponsor wallet
+  await token.approve(superToken.address, '999999000000000000000000');
 
-  // LIKELY NOT GOING TO BE USED AS POSTS ARE NOT NFTs :/
-  // this is to be decoded in the contract to later burn the nft once the stream is closed
-  const burnData = await getBurnSig(lensHub, ethers, sponsor, profileId);
-
-  const userData = ethers.utils.defaultAbiCoder.encode(
-    ['uint256', 'uint256'],
-    [profileIdPointed, pubIdPointed]
-  );
-
-  // const flowRate = ethers.utils.parseUnits('0.0001', 'ether');
-  const flowRate = '2'; // pubReferenceData = [Superfluid.fUSDCx, 1, 3600, 'cats'];
-
-  // create the stream with encoded data
-  try {
-    const { maxFeePerGas, maxPriorityFeePerGas } = await ethers.provider.getFeeData();
-    console.log(`SponsorModule: ${SponsorModule}`);
-    console.log('sf.cfaV1.createFlow()')
-    const createFlowOperation = sf.cfaV1.createFlow({
-      sender: sponsor.address,
-      receiver: SponsorModule,
-      flowRate: flowRate,
-      superToken: Superfluid.fUSDCx,
-      userData,
-      overrides: { maxFeePerGas, maxPriorityFeePerGas, gasLimit: 2100000 }
-    });
-
-    const tx = await createFlowOperation.exec(signer);
-    console.log(`tx: ${tx.hash}`);
-    await tx.wait();
-    console.log('stream created!');
-
-    // NOTE: the sender is actually the sponsor, but a stream between the module and the receiver is also
-    // created to pipe the funds
-    console.log(`${SponsorModule} => ${user.address}`);
-    data = await sf.cfaV1.getFlow({
-      superToken: Superfluid.fUSDCx,
-      sender: SponsorModule,
-      receiver: user.address,
-      providerOrSigner: lensHub.provider,
-    });
-    console.log(data);
-  } catch (error) {
-    console.error(error);
-    process.exit(0);
-  }
-
-  // assuming the above worked, we can now mirror
-  console.log('lensHub.mirror()');
-  const tx = await lensHub.connect(sponsor).mirror({
-    profileId,
-    profileIdPointed,
-    pubIdPointed,
-    referenceModule: ZERO_ADDRESS,
-    referenceModuleData: []
-  });
-  await tx.wait();
-  console.log(`tx: ${tx.hash}`);
-  const newPubId = await lensHub.getPubCount(profileId);
-  console.log(await lensHub.getPub(profileId, newPubId));
+  const { maxFeePerGas, maxPriorityFeePerGas } = await ethers.provider.getFeeData();
+  await superToken
+    .upgrade({ amount: '999999000000000000000000', overrides: { maxFeePerGas, maxPriorityFeePerGas, gasLimit: 2100000 } })
+    .exec(signer);
+  console.log('sponsor wallet topped up with fUSDCx');
 });
